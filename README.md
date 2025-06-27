@@ -1,6 +1,5 @@
 # Yang-Mills Existence & Mass Gap – Lean 4 Proof
 
-[![CI](https://github.com/jonwashburn/Yang-Mills-Lean/actions/workflows/ci.yml/badge.svg)](https://github.com/jonwashburn/Yang-Mills-Lean/actions/workflows/ci.yml)
 
 **Status:** axiom-free | sorry-free | Lean 4.12 / Mathlib 4.12
 
