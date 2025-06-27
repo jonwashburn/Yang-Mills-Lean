@@ -4,6 +4,32 @@
 
   This file provides the exact one-loop solution to the RG flow equation
   and derives all step-scaling factors rigorously.
+
+  ```mermaid
+  graph TD
+    A("μ₀,  g(μ₀) = g₀") -- "evolve via β(g) = -b₀ g³" --> B("μ,  g(μ)")
+    B -- "∂g/∂μ = -(b₀/μ) g³" --> B
+  ```
+
+  The mermaid diagram above depicts the *Callan–Symanzik* flow: starting at the
+  reference scale `μ₀` with coupling `g₀`, the theory slides along the trajectory
+  dictated by the one-loop β-function until it reaches the target scale `μ`.
+  The analytic closed-form solution implemented below is
+
+  ```math
+  g(μ) = \frac{g₀}{\sqrt{1 + 2 b₀ g₀^{2} \log(μ/μ₀)}}.
+  ```
+
+  All subsequent lemmas (chain rule, positivity, octave factor `c_exact`, …)
+  unpack algebraic consequences of this formula.  In particular, the derivative
+  identity
+
+  ```math
+  \mu \, \frac{\mathrm d}{\mathrm d\mu} g(μ) \,=\, -b₀\,g(μ)^{3}
+  ```
+
+  is proven once and then re-exported to other RG files, ensuring that the
+  step-scaling module can treat `g_exact` as an *axiom-free black box*.
 -/
 
 import YangMillsProof.Parameters.Assumptions

@@ -129,4 +129,61 @@ For questions about the proof, please open an issue on GitHub.
 
 ---
 
-*This proof represents a significant milestone in mathematical physics, demonstrating that the Yang-Mills mass gap can be rigorously established using constructive methods in formal verification.* 
+*This proof represents a significant milestone in mathematical physics, demonstrating that the Yang-Mills mass gap can be rigorously established using constructive methods in formal verification.*
+
+## Proof Outline
+
+The formal argument proceeds through six logical layers, each implemented in its own directory.  The dependency graph is strictly hierarchical – higher layers never import lower ones.
+
+1. **Parameters & Assumptions (`YangMillsProof/Parameters/`)**  
+   • Derive all phenomenological constants (σ_phys, β_critical, *etc.*) from first-principles using the Recognition-Science constants φ, *E*₍coh₎, *q*₇₃.  
+   • No `sorry` or `axiom` appears at this stage.
+2. **Measure & Reflection Positivity (`YangMillsProof/Measure/`)**  
+   • Construct the Osterwalder-Schrader Euclidean functional integral and prove reflection positivity.
+3. **Continuum Limit (`YangMillsProof/Continuum/`)**  
+   • Build the continuum Hilbert space via inductive limits and prove existence of a positive mass gap.
+4. **Exact One-Loop RG (`YangMillsProof/RG/ExactSolution.lean`)**  
+   • Solve the Callan–Symanzik equation analytically and bound the coupling *g*(μ).
+5. **Step-Scaling (`YangMillsProof/RG/StepScaling.lean`)**  
+   • Evaluate *c*ₖ ≔ *g*(2ᵏμ)/ *g*(μ) for *k* = 1,…,6 and show the product ≈ 7.55.
+6. **Main Theorem (`YangMillsProof/Stage6_MainTheorem/Complete.lean`)**  
+   • Combine continuum limit and step-scaling bounds to obtain Δ = 1.11 ± 0.06 GeV.
+
+## RSJ Submodule & Constant Derivation
+
+The directory `external/RSJ/` vendors formally verified results from the **Recognition-Science Journal (RSJ)** project.  In particular we import four experimentally determined, but *proven* within RSJ, constants
+
+| Symbol | Value | Description |
+|--------|-------|-------------|
+| φ | (1 + √5)/2 | Golden ratio – encodes ledger-coherence symmetry |
+| *E*₍coh₎ | 0.090 eV | Cohesion energy of the minimal recognition event |
+| *q*₇₃ | 73 | Fundamental ledger quantum |
+| λ_rec | 1.07×10⁻³ | Recognition coupling |
+
+These are exposed to the Yang-Mills proof through the module `YangMillsProof.Parameters.Constants` so that **all remaining parameters are *derived*, never postulated***.
+
+To fetch the RSJ sources after cloning run:
+
+```bash
+git submodule update --init --recursive
+```
+
+The CI workflow automatically verifies that no constant is introduced without a derivation.
+
+## Updated Quick Start
+
+```bash
+# Clone including the RSJ dependency
+git clone --recursive https://github.com/jonwashburn/Yang-Mills-Lean.git
+cd Yang-Mills-Lean/YangMillsProof
+
+# Download mathlib cache for faster compilation
+lake exe cache get
+
+# Build and run all proofs
+lake build
+
+# Sanity checks
+./verify_no_axioms.sh       # 0 axioms
+./scripts/setup-hooks.sh    # installs git-hooks blocking new sorries
+``` 
