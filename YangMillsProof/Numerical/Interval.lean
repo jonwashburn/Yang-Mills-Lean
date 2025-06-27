@@ -9,6 +9,7 @@ import Mathlib.Data.Real.Basic
 import Mathlib.Data.Rat.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import YangMillsProof.Numerical.Constants
 
 namespace YangMillsProof.Numerical
 
@@ -110,19 +111,15 @@ lemma Interval.singleton_mem (q : ℚ) : (q : ℝ) ∈ᵢ singleton q := by
 
 @[simp] lemma log2_interval : Real.log 2 ∈ᵢ Interval.mk' (6931/10000) (6932/10000) := by
   -- We use that log 2 ≈ 0.693147...
-  -- Lower bound: 0.6931 < log 2
-  -- Upper bound: log 2 < 0.6932
+  -- Import bounds from Constants
+  have h := YangMillsProof.Numerical.Constants.log_two_bounds
   constructor
   · -- 0.6931 < log 2
-    have h : (Real.exp (6931/10000) : ℝ) < 2 := by sorry  -- Numerical fact
-    have := Real.log_lt_log_iff (Real.exp_pos _) (by norm_num : (0 : ℝ) < 2)
-    rw [Real.log_exp] at this
-    exact lt_of_lt_of_le (by norm_num : (6931/10000 : ℝ) < 6931/10000 + 1/100000) (le_of_lt (this.mp h))
+    calc (6931/10000 : ℝ) = 0.6931 := by norm_num
+      _ < Real.log 2 := h.1
   · -- log 2 < 0.6932
-    have h : 2 < (Real.exp (6932/10000) : ℝ) := by sorry  -- Numerical fact
-    have := Real.log_lt_log_iff (by norm_num : (0 : ℝ) < 2) (Real.exp_pos _)
-    rw [Real.log_exp] at this
-    exact this.mpr h
+    calc Real.log 2 < 0.6932 := h.2
+      _ = (6932/10000 : ℝ) := by norm_num
 
 @[simp] lemma sqrt5_interval : Real.sqrt 5 ∈ᵢ Interval.mk' (2236/1000) (2237/1000) := by
   -- We use that √5 ≈ 2.236067...

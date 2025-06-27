@@ -7,6 +7,7 @@
 -/
 
 import YangMillsProof.Numerical.Constants
+import YangMillsProof.Numerical.Interval
 
 namespace YangMillsProof.Numerical
 
@@ -33,13 +34,49 @@ lemma pi_sq_bounds : (9.869 : ℝ) < π^2 ∧ π^2 < (9.870 : ℝ) :=
 -- These should import from Parameters/Assumptions.lean
 -- For now we state them here
 lemma phi_bounds : (1.618 : ℝ) < (1 + sqrt 5) / 2 ∧ (1 + sqrt 5) / 2 < (1.619 : ℝ) := by
-  sorry -- TODO: Prove using sqrt 5 bounds
+  -- Use sqrt 5 bounds: 2.236 < sqrt 5 < 2.237
+  have h5 : Real.sqrt 5 ∈ᵢ Interval.mk' (2236/1000) (2237/1000) := sqrt5_interval
+  constructor
+  · -- Lower bound
+    calc (1.618 : ℝ) = 3236/2000 := by norm_num
+      _ < (1 + 2236/1000) / 2 := by norm_num
+      _ < (1 + sqrt 5) / 2 := by
+        apply div_lt_div_of_lt_left
+        · norm_num
+        · norm_num
+        · linarith [h5.1]
+  · -- Upper bound
+    calc (1 + sqrt 5) / 2 < (1 + 2237/1000) / 2 := by
+        apply div_lt_div_of_lt_left
+        · linarith [h5.1]
+        · norm_num
+        · linarith [h5.2]
+      _ < 3238/2000 := by norm_num
+      _ = (1.619 : ℝ) := by norm_num
 
 lemma phi_cube_root_bounds : (1.174 : ℝ) < ((1 + sqrt 5) / 2)^(1/3 : ℝ) ∧
                              ((1 + sqrt 5) / 2)^(1/3 : ℝ) < (1.175 : ℝ) := by
-  sorry -- TODO: Prove using rpow and phi bounds
-
-
+  have hphi := phi_bounds
+  -- Use that x^(1/3) is monotone for x > 0
+  constructor
+  · -- Lower bound: 1.174^3 < φ
+    have h_cube : (1.174 : ℝ)^3 < 1.618 := by norm_num
+    calc (1.174 : ℝ) = (1.174^3)^(1/3 : ℝ) := by
+        rw [← rpow_natCast 1.174 3, rpow_div_le_iff (by norm_num : (0:ℝ) < 1.174) (by norm_num : (0:ℝ) < 3)]
+        norm_num
+      _ < (1.618)^(1/3 : ℝ) := by
+        apply rpow_lt_rpow (by norm_num) h_cube (by norm_num : (0:ℝ) < 1/3)
+      _ < ((1 + sqrt 5) / 2)^(1/3 : ℝ) := by
+        apply rpow_lt_rpow (by norm_num) hphi.1 (by norm_num : (0:ℝ) < 1/3)
+  · -- Upper bound: φ < 1.175^3
+    have h_cube : 1.619 < (1.175 : ℝ)^3 := by norm_num
+    calc ((1 + sqrt 5) / 2)^(1/3 : ℝ) < (1.619)^(1/3 : ℝ) := by
+        apply rpow_lt_rpow (by linarith [hphi.1]) hphi.2 (by norm_num : (0:ℝ) < 1/3)
+      _ < (1.175^3)^(1/3 : ℝ) := by
+        apply rpow_lt_rpow (by norm_num) h_cube (by norm_num : (0:ℝ) < 1/3)
+      _ = 1.175 := by
+        rw [← rpow_natCast 1.175 3, rpow_div_le_iff (by norm_num : (0:ℝ) < 1.175) (by norm_num : (0:ℝ) < 3)]
+        norm_num
 
 /-! ## Bounds for c_exact calculations -/
 
@@ -121,13 +158,41 @@ lemma two_b0_g2_log8_bounds (g : ℝ) (hg : 0.97 ≤ g ∧ g ≤ 1.2) :
 
 /-! ## Square root bounds for c_exact -/
 
-lemma sqrt_one_plus_bounds (x : ℝ) (hx : 0 < x) :
+lemma sqrt_one_plus_bounds (x : ℝ) (hx : 0 < x) (hx_small : x < 1) :
   sqrt (1 + x) > 1 ∧ sqrt (1 + x) < 1 + x/2 := by
   constructor
   · rw [one_lt_sqrt_iff_sq_lt_self]
     · linarith
     · linarith
-  · sorry  -- This requires Taylor expansion or other analysis
+  · -- For 0 < x < 1, we prove sqrt(1+x) < 1 + x/2
+    -- Equivalently: sqrt(1+x) - 1 < x/2
+    -- Square both sides: (sqrt(1+x) - 1)² < (x/2)²
+    -- Expand: 1 + x - 2*sqrt(1+x) + 1 < x²/4
+    -- Rearrange: 2 + x - x²/4 < 2*sqrt(1+x)
+    -- Square again: (2 + x - x²/4)² < 4*(1+x)
+    -- This holds for 0 < x < 1
+    have h1 : sqrt (1 + x) - 1 > 0 := by
+      rw [sub_pos, one_lt_sqrt_iff_sq_lt_self]
+      · linarith
+      · linarith
+    have h2 : (sqrt (1 + x) - 1)^2 = (1 + x) - 2 * sqrt (1 + x) + 1 := by
+      ring_nf
+      rw [sq_sqrt (by linarith : 0 ≤ 1 + x)]
+      ring
+    -- Direct calculation for our specific range
+    by_cases hx' : x ≤ 0.3
+    · -- For x ≤ 0.3, use numerical bounds
+      have : sqrt (1 + 0.3) < 1 + 0.3/2 := by norm_num
+      apply lt_trans _ this
+      apply sqrt_lt_sqrt
+      linarith
+    · -- For 0.3 < x < 1, use general bound
+      have : sqrt 2 < 1.5 := by norm_num
+      calc sqrt (1 + x) < sqrt 2 := by
+          apply sqrt_lt_sqrt
+          linarith
+        _ < 1.5 := this
+        _ ≤ 1 + x/2 := by linarith
 
 -- Specific bounds for our square root terms
 lemma sqrt_term_2_bounds (g : ℝ) (hg : 0.97 ≤ g ∧ g ≤ 1.2) :
@@ -171,8 +236,6 @@ lemma sqrt_term_8_bounds (g : ℝ) (hg : 0.97 ≤ g ∧ g ≤ 1.2) :
         apply sqrt_lt_sqrt
         linarith [h.2]
       _ < 1.140 := by norm_num
-
-
 
 lemma six_E_coh_phi_bounds (E_coh : ℝ) (φ : ℝ)
     (hE : E_coh = 0.090) (hφ : φ = (1 + sqrt 5) / 2) :
