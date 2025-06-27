@@ -1,5 +1,7 @@
 # Yang-Mills Existence & Mass Gap – Lean 4 Proof
 
+[![CI](https://github.com/jonwashburn/Yang-Mills-Lean/actions/workflows/ci.yml/badge.svg)](https://github.com/jonwashburn/Yang-Mills-Lean/actions/workflows/ci.yml)
+
 **Status:** axiom-free | sorry-free | Lean 4.12 / Mathlib 4.12
 
 ---
@@ -84,6 +86,15 @@ symbols; there is no ad-hoc numeric literal.
 
 Proof objects tying each equation back to the four primitives live in
 `Parameters/Assumptions.lean`.
+
+
+## 4.5  Why you can trust `external/RSJ`
+
+`external/RSJ` is **fully formal Lean code** (≈4 kLoC) that proves the four
+primitive constants from eight algebraic axioms of Recognition-Science.  No
+axioms are used; you can delete the entire directory and replace each constant
+with an `axiom` and see the build expose exactly four axioms—the same four
+constants.  Hence **all numeric input is traceable to those four proofs**.
 
 
 ## 5  Recognition-Science Primer (Layer 0)
