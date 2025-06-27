@@ -29,11 +29,62 @@ namespace Matrix.SpecialUnitaryGroup
 -- Proof: eigenvalues satisfy |λᵢ| = 1, so |tr(M)| = |∑λᵢ| ≤ ∑|λᵢ| = n
 lemma trace_bound_of_mem {n : Type*} [Fintype n] [DecidableEq n] (M : SpecialUnitaryGroup n ℂ) :
   Complex.abs (trace M.val) ≤ Fintype.card n := by
-  -- This is a standard result from matrix analysis
-  -- For any n×n unitary matrix M, |tr(M)| ≤ n
-  -- Proof: eigenvalues satisfy |λᵢ| = 1, so |tr(M)| = |∑λᵢ| ≤ ∑|λᵢ| = n
-  -- This requires spectral theory which is beyond the scope of this file
-  sorry
+  -- 1.  |tr M| ≤ ∑ |M_{ii}|   (triangle inequality)
+  have h₁ : Complex.abs (trace M.val) ≤
+      (Finset.univ : Finset n).sum (fun i => Complex.abs (M.val i i)) := by
+    -- `Matrix.trace` is the (finite) sum over diagonal entries.
+    -- The generic triangle inequality for complex numbers gives the bound.
+    simpa [Matrix.trace] using Complex.abs_sum_le_sum_abs (fun i => M.val i i)
+
+  -- 2.  For a unitary matrix each entry obeys |M_{ij}| ≤ 1.
+  --     We show this for the diagonal entries.
+  have h_diag : ∀ i : n, Complex.abs (M.val i i) ≤ 1 := by
+    intro i
+    -- From unitarity:  (Mᴴ * M) = 1.  Looking at entry (i,i)
+    have h_unit : M.val.conjTranspose ⬝ M.val = 1 :=
+      (Matrix.mem_unitaryGroup_iff.mp M.2.1).1
+    -- Extract the (i,i) entry.
+    have h_entry := congrArg (fun A : Matrix n n ℂ => A i i) h_unit
+    -- Rewrite the matrix product entry explicitly:  Σ_k conj(M_{ki}) * M_{ki} = 1.
+    -- The RHS is a real 1 (ofReal 1), but we only need the real equality.
+    -- Use `simp` to turn the equation into a real statement about absolute squares.
+    have h_sum : (Finset.univ : Finset n).sum (fun k => Complex.abs (M.val k i) ^ 2) = 1 := by
+      simpa [Matrix.mul_apply, Matrix.conjTranspose_apply, Matrix.one_apply,
+            Complex.mul_comm, Complex.abs_sq, Finset.mul_sum, Complex.conj_ofReal,
+            Complex.ofReal_mul, Complex.ofReal_one, Complex.ofReal_pow] using h_entry
+    -- Each term in the sum is non-negative.  By `single_le_sum` we obtain the bound for k = i.
+    have h_single : Complex.abs (M.val i i) ^ 2 ≤ 1 := by
+      have h0 : ∀ k : n, 0 ≤ (Complex.abs (M.val k i) ^ 2) := fun _ => pow_two_nonneg _
+      have h_le := Finset.single_le_sum (fun k _ => h0 k)
+                  (Finset.mem_univ i)
+      have : Complex.abs (M.val i i) ^ 2 ≤
+          (Finset.univ : Finset n).sum (fun k => Complex.abs (M.val k i) ^ 2) :=
+        h_le
+      simpa [h_sum] using this
+    -- From |a|^2 ≤ 1 and |a| ≥ 0 we deduce |a| ≤ 1.
+    have : Complex.abs (M.val i i) ≤ 1 := by
+      have h_nonneg : 0 ≤ Complex.abs (M.val i i) := Complex.abs.nonneg _
+      -- Use `sq_le_one_iff_abs_le_one` (for real numbers).
+      have := (sq_le_one_iff_abs_le_one).1 h_single
+      -- `abs` here is the real absolute value; since `Complex.abs …` is non-neg, we can drop `abs`.
+      simpa [abs_of_nonneg h_nonneg] using this
+    exact this
+
+  -- 3. Sum the diagonal bounds to get an upper bound of `card n`.
+  have h_sum_diag : (Finset.univ : Finset n).sum (fun i => Complex.abs (M.val i i)) ≤
+      (Finset.card (Finset.univ : Finset n)) := by
+    -- Apply `h_diag` term-wise.
+    have := Finset.sum_le_sum (fun i _ => h_diag i)
+    simpa using this
+
+  -- 4. Convert `Finset.card` to `Fintype.card` and combine all inequalities.
+  have h_card : (Finset.card (Finset.univ : Finset n)) = Fintype.card n := by
+    simpa using Finset.card_univ
+  have h₂ : (Finset.univ : Finset n).sum (fun i => Complex.abs (M.val i i)) ≤ Fintype.card n := by
+    simpa [h_card] using h_sum_diag
+
+  -- Final inequality.
+  exact h₁.trans h₂
 
 end Matrix.SpecialUnitaryGroup
 
