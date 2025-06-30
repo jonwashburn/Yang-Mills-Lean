@@ -2,7 +2,7 @@ import external.RSJ.Core.GoldenRatioDerivation
 import external.RSJ.Core.CoherenceQuantumDerivation
 import external.RSJ.Core.TopologicalCharge
 import external.RSJ.Core.RecognitionLengthDerivation
-import external.RSJ.Physics.Axioms
+import external.RSJ.Physics.Constants
 
 namespace RS.Param
 
